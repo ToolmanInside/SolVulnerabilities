@@ -25,11 +25,21 @@ As the reentrancy caused some significant losses in the past [daoAttack](https:/
 * Adding the self-predefined modifier in the function declaration 
 * Using `if` lock(s) to prevent reentrancy. However, these DMs are seldom discussed in relevant studies or considered in existing scanners. Hence, the ignorance about possible DMs will result in the high FP rate of detection
 
-For example, in Fig.~\ref{fig:evaluation:fp1}, according to rule of **Slither**:
+![](fig/interval.png)
+
+For the first DM, in [CB1](https://github.com/ToolmanInside/SolVulnerabilities/blob/master/code%20blocks/CB1.sol), according to rule of **Slither**:
 
 ![](fig/slither_rule.png)
 
-CB8 is reported as a reentrancy  by **Slither**---firstly, it writes to the public variable `total_reward`; then calls external function `buyTokens.value`; last, writes to the public variable `winnerPoolTotal`. However, in reality, reentrancy will never be triggered by external attackers due to the hard-coded address value at line 13 in Fig.~\ref{fig:evaluation:fp1}. Similarly, in Fig.~\ref{fig:evaluation:fp2}, we show a FP for **Oyente**, according to its run-time detection rule below:
+[CB1](https://github.com/ToolmanInside/SolVulnerabilities/blob/master/code%20blocks/CB1.sol) is reported as a reentrancy  by **Slither**---firstly, it writes to the public variable `total_reward`; then calls external function `buyTokens.value`; last, writes to the public variable `winnerPoolTotal`. However, in reality, reentrancy will never be triggered by external attackers due to the hard-coded address value at line 13 in [CB1](https://github.com/ToolmanInside/SolVulnerabilities/blob/master/code%20blocks/CB1.sol). Similarly, in [CB2](https://github.com/ToolmanInside/SolVulnerabilities/blob/master/code%20blocks/CB2.sol), we show a FP for **Oyente**, according to its run-time detection rule below:
 
 ![](fig/oyente_rule.png)
+
+where r(varg) means read operation(s) to a public variable, gas(trans) > 2300 means the gas for transaction must be larger than 2300, amt(bal) > amt(trans) means the balance amount must be larger than transfer amount, and lastly the global variable could be changed before external calls.
+
+Although [CB2](https://github.com/ToolmanInside/SolVulnerabilities/blob/master/code%20blocks/CB2.sol) satisfies all the four conditions, it actually could not be triggered by external attackers, again due to the only hard-coded address allowed in the transaction.
+
+![](fig/interval.png)
+
+For the second DM of using private modifier, the existing scanners fail to consider that. In our manual inspection  of FPs, we consider the following defense is successful: if this private function (reported by **Slither** or **Oyente** as reentrancy) is never called by other public  functions in the same contract, or only called by the public functions that have no loop path in  their CFGs. Under such scenario, the reported function will actually never be recursively called by external attackers. For example, if we changed the modifier of  function `buyOne` from `public` to `private` at line 1 in [CB_original](https://github.com/ToolmanInside/SolVulnerabilities/blob/master/code%20blocks/CB original.sol), **Slither** would still report it as a reentrancy vulnerability---but it could never be called by external attackers, as it is not called in other functions. We find that **Oyente** also suffers from this FP issue.
 
