@@ -16,9 +16,7 @@ In, our experiment studies, we conduct...
 
 As shown in Table 1, we apply the three scanners on the six types of vulnerabilities. Overall, among these three scanners, **Slither** seems to achieve the best results, reporting most vulnerabilities---totally 2631 vulnerability candidates of five types. In contrast, **Smartcheck** reports 1072 candidates and **Oyente** reports only 588 candidates.  However, due to the  internal detection mechanisms, each scanner inevitably yields some FPs.
 
- After manual inspection of human expertise, the TP rate is shown at the second row of each cell in Table 1. In generally, **Slither** reports the most candidates, but suffers from a big issue of a high FP rate. Especially for *Reentrancy*, the TP rate of **Slither** is only about 9%. As dynamic analysis is more accurate, **Oyente**'s TP is still acceptable. To some extent, it is unexpected that the TP rate of **Smartcheck** is good. We review some FPs of these scanners as below.
-
-##### Table 2: \textbf{CB8}: a real case of using constant value for the account address, which is a FP for \slither.
+ After manual inspection of human expertise, the TP rate is shown at the second row of each cell in Table 1. In generally, **Slither** reports the most candidates, but suffers from a big issue of a high FP rate. Especially for reentrancy, the TP rate of **Slither** is only about 9%. As dynamic analysis is more accurate, **Oyente**'s TP is still acceptable. To some extent, it is unexpected that the TP rate of **Smartcheck** is good. We review some FPs of these scanners as below.
 
 As the reentrancy caused some significant losses in the past [daoAttack](https://doi.org/10.1109/ICSAI.2017.8248566), the real contracts on Ethereum have already adopted some DMs to prevent from the actual invocation of reentrancy.  We summarize the five main categories of DMs: 
 
@@ -27,7 +25,11 @@ As the reentrancy caused some significant losses in the past [daoAttack](https:/
 * Adding the self-predefined modifier in the function declaration 
 * Using `if` lock(s) to prevent reentrancy. However, these DMs are seldom discussed in relevant studies or considered in existing scanners. Hence, the ignorance about possible DMs will result in the high FP rate of detection
 
-For example, in Fig.~\ref{fig:evaluation:fp1}, according to Rule~\ref{rule:slither:reentrance}, CB8 is reported as a {reentrancy}  by \slither---firstly, it writes to the \codeff{public} variable \codeff{total\_reward}; then calls \codeff{external} function \codeff{buyTokens.value}; last, writes to the \codeff{public} variable \codeff{winnerPoolTotal}. However, in reality, reentrancy will never be triggered by external attackers due to the hard-coded address value at line 13 in Fig.~\ref{fig:evaluation:fp1}. Similarly, in Fig.~\ref{fig:evaluation:fp2}, we show a FP for \oyento, according to its run-time detection rule below\footnote{We summarize this rule from the implementation of \oyento.}:
+For example, in Fig.~\ref{fig:evaluation:fp1}, according to rule of **Slither**:
+
+![](fig/slither_rule.png)
+
+CB8 is reported as a reentrancy  by **Slither**---firstly, it writes to the public variable `total_reward`; then calls external function `buyTokens.value`; last, writes to the public variable `winnerPoolTotal`. However, in reality, reentrancy will never be triggered by external attackers due to the hard-coded address value at line 13 in Fig.~\ref{fig:evaluation:fp1}. Similarly, in Fig.~\ref{fig:evaluation:fp2}, we show a FP for **Oyente**, according to its run-time detection rule below:
 
 ![](fig/oyente_rule.png)
 
