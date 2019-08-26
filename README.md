@@ -29,5 +29,5 @@ As the reentrancy caused some significant losses in the past [daoAttack](https:/
 
 For example, in Fig.~\ref{fig:evaluation:fp1}, according to Rule~\ref{rule:slither:reentrance}, CB8 is reported as a {reentrancy}  by \slither---firstly, it writes to the \codeff{public} variable \codeff{total\_reward}; then calls \codeff{external} function \codeff{buyTokens.value}; last, writes to the \codeff{public} variable \codeff{winnerPoolTotal}. However, in reality, reentrancy will never be triggered by external attackers due to the hard-coded address value at line 13 in Fig.~\ref{fig:evaluation:fp1}. Similarly, in Fig.~\ref{fig:evaluation:fp2}, we show a FP for \oyento, according to its run-time detection rule below\footnote{We summarize this rule from the implementation of \oyento.}:
 
-![](fig\oyente_rule.png)
+![](fig/oyente_rule.png)
 
