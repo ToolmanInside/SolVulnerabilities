@@ -20,7 +20,14 @@ As shown in Table 1, we apply the three scanners on the six types of vulnerabili
 
 ##### Table 2: \textbf{CB8}: a real case of using constant value for the account address, which is a FP for \slither.
 
-$$
-\big ( r(var_{g}) \wedge (gas_{trans} > 2300) \wedge (amt_{bal} > amt_{trans}) \wedge var_{g} \text{ changad before external call} \big )  \Rightarrow \text{reentrancy}
-$$
+As the reentrancy caused some significant losses in the past [daoAttack](https://doi.org/10.1109/ICSAI.2017.8248566), the real contracts on Ethereum have already adopted some DMs to prevent from the actual invocation of reentrancy.  We summarize the five main categories of DMs: 
+
+* Hard-coding the constant value for the address of payee or payer
+* Using `private` modifier for the function declaration
+* Adding the self-predefined modifier in the function declaration 
+* Using `if` lock(s) to prevent reentrancy. However, these DMs are seldom discussed in relevant studies or considered in existing scanners. Hence, the ignorance about possible DMs will result in the high FP rate of detection
+
+For example, in Fig.~\ref{fig:evaluation:fp1}, according to Rule~\ref{rule:slither:reentrance}, CB8 is reported as a {reentrancy}  by \slither---firstly, it writes to the \codeff{public} variable \codeff{total\_reward}; then calls \codeff{external} function \codeff{buyTokens.value}; last, writes to the \codeff{public} variable \codeff{winnerPoolTotal}. However, in reality, reentrancy will never be triggered by external attackers due to the hard-coded address value at line 13 in Fig.~\ref{fig:evaluation:fp1}. Similarly, in Fig.~\ref{fig:evaluation:fp2}, we show a FP for \oyento, according to its run-time detection rule below\footnote{We summarize this rule from the implementation of \oyento.}:
+
+![](fig\oyente_rule.png)
 
