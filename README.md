@@ -20,5 +20,7 @@ As shown in Table 1, we apply the three scanners on the six types of vulnerabili
 
 ##### Table 2: \textbf{CB8}: a real case of using constant value for the account address, which is a FP for \slither.
 
-$$ \big ( r(var_{g}) \wedge (gas_{trans} > 2300) \wedge (amt_{bal} > amt_{trans}) \wedge var_{g} \text{~is changad before external call} \big )  \Rightarrow \text{reentrancy} $$
+$$
+\big ( r(var_{g}) \wedge (gas_{trans} > 2300) \wedge (amt_{bal} > amt_{trans}) \wedge var_{g} \text{ changad before external call} \big )  \Rightarrow \text{reentrancy}
+$$
 
