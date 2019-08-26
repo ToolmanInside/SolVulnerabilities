@@ -53,4 +53,53 @@ For the third DM of adopting user-defined modifier for protection, we find some 
 
 Different from the above three DMs on permission control to prevent external malicious calls, the last DM is to prevent the recursive entrance for the function---eliminating the issue from root. For instance, in [CB4](https://github.com/ToolmanInside/SolVulnerabilities/blob/master/code%20blocks/CB4.sol), the internal instance variable `reEntered` will be checked at line 5 before processing the business logic between line 8 and 10. To prevent the reentering due to calling `ZTHTKN.buyAndSetDivPercentage.value`, `reEntered` will switched to `true`; after the transaction is done, it will be reverted to `false` to allow other transactions.
 
+![](fig/interval.png)
+
 Totally, 457 FP cases are manually identified for **Slither**. Among them, 216 FPs are attributed for the first DM,  76 FPs for the second,  47 FPs for the third, and only 1 FP for the forth DM and 117 for other causes. In contrast, **Oyente** has fewer FP cases (only 53 in total), among which the distribution for the four caused DMs is 5, 5, 22 and 0. 
+
+### FPs of Vulnerabilities
+
+##### FPs of Unexpected Revert
+
+Though **Slither** and **Smartcheck** can detect some cases, their rules currently are so general that most reported cases are actually bad coding practices (e.g., warnings hinted by the IDE) rather than exploitable vulnerabilities. Specifically, **Slither** reports 666 cases of calls in loop, as long as an external call (e.g., `send` or `transfer` of other addresses) is inside a loop, regardless of its actual impact. For instance, in Fig.~\ref{fig:evaluation:fp5},  CB12 reported by **Slither** will not cause expected revert, as `require` is not used to check the return value of function `send`. Similarly, **Smartcheck** also supports the detection of transfer in loop. As **Smartcheck** checks only `transfer` in a loop, it reports a much smaller number (274) than that of **Slither** (666).  However, after manual auditing, we find that they report many common TPs, with 235 TPs for **Slither** and 257 TPs for **Smartcheck**. Most FPs of **Slither** are due to inconsideration of the key `require` check that causes reverting.
+
+According to our observation, the rules of call/transaction in loop are neither sound nor complete to cover most of unexpected revert cases. At least, modifier `require`  is ignored in these two rules, which makes **Slither** and **Smartcheck** incapable to check possible revert operations on multiple account addresses. Here,  multiple accounts must be involved for exploiting this attack---the failure on one account blocks other accounts via reverting the operations for the whole loop. Hence, CB13 reported by **Smartcheck** in Fig.~\ref{fig:evaluation:fp6} is FP, as the operations in the loop are all on the same account (i.e., `sender` at line 8) and potential revert will not affect other accounts. In addition to reverting inside a loop, as shown in Fig.~\ref{fig:motivating2}, there exist other cases where revert happens in any unsecured external calls without loop.
+
+##### FPs of Tx.origin Abusing
+
+For this, **Slither** reports 34 results, none of which are FPs. **Slither**'s rule is simple but effective:
+
+![](fig/slither_rule_tx.png)
+
+It finds all `Tx.origin` that appears in control flow condition. The rationale is that accessing `Tx.Origin` is just a bad programming practice by itself, not vulnerable. Only when used in control flow conditions, it could be manipulated for control flow hijack.
+
+In contrast, **Smartcheck** reports much more cases (210) than **Slither** (34), as it is more complete in considering both control flow conditions inside a function  and the modifier code outside the function: 
+
+![](fig/smartcheck_rule_tx.png)
+
+As shown in Fig.~\ref{fig:evaluation:fp3}, self-defined modifier (e.g., `onlyAdmin()`) can be imported before the function. As such modifier is used for permission control, it also affects the control flow of the program.  The 149 FPs of **Smartcheck** (70.95%) are due to the reason that `Tx.origin` is used for a parameter of a function call, and then the return value of the function call is neither check nor used---making `Tx.origin` have no actual impact on control flow.
+
+##### FPs of Unchecked Low-Level-Call
+
+Only **Smartcheck** reports this vulnerability by checking whether the following functions are under the check: `callcode()`, `call()`, `send()` and `delegatecall()`. Note that the check can be done in several ways: 
+
+1. Using the built-in keyword `require` and `assert`
+2. Using the `if` condition check
+3. Using the self-defined exception-handler class to capture the error-prone low-level-call. According to [the paper](http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=8445052&isnumber=8445042
+   ), the rule in **Smartcheck** is called unchecked external call, which checks whether calls of the above 4 functions are inside `if` conditions.
+
+However, in its implementation, we find that it actually checks not only calls of the 4 low-level functions, but also calls of some user-defined functions. Hence, checking extra calls of user-defined functions yields 189 FPs out of 551 results.
+
+##### FPs of Self-destruct Abusing
+
+In the existing scanners, only **Slither** detects the misuse of self-destruct, which is called suicidal detection.  Totally, **Slither** reports 49 cases of suicidal via its built-in rule---as long  as function `selfdestruct` is used, no matter what the context is, **Slither** will report it. Obviously, the **Slither**'s rule is too simple and too board. It mainly works for the direct calling of `selfdestruct`  without any permission control or conditions of business logic---under such circumstance (11 out of 46), the **Slither** rule can help to detect the abusing. In practice, in most cases (35 out of 46) `selfdestruct` is called with the `admin` or `owner` permission control or under some strict conditions of some business logic. For example, `selfdestruct` is indeed required in the business logic of the CB14 in Fig.~\ref{fig:evaluation:fp7}, as the owner wants to reset the contract via calling `selfdestruct` after the transactions in a period are all done and the contract is not active (i.e., the condition at line 2). Note that  parameter `burn` is just padded to call `selfdestruct` in a correct way.
+
+To sum up, no single scanner can dominate others by achieving the best precision and recall at the same time. In RQ1, we focus on their FPs to formulate  the refined rules that consider the DMs. In RQ3, to have a fair comparison with \ourTool, recall and FNs of these scanners will be more concerned and elaborated.
+
+### Evaluating the Extracted AVS
+
+Based on  the TPs reported by the existing scanners, we automatically extract the AVS. In Table~\ref{tab:avs_num}, we show the number of the extracted AVS for each vulnerability type. Totally, from the existing TPs we learn 47 AVS, 43\% of which are of reentrancy. The rationale is that there exist similar business logic or implementation routines for the reentrancy vulnerability. For example, for the 96 TPs of reentrancy found by \slither and \oyento, we apply the AST tree-edit distance based clustering method and get {24} clusters (when setting the cluster width is {100} edits). After manual inspection, we find 20 clusters are representative and can serve as the AVS for discovering more unknown ones. For example,  for some functions (e.g., \codeff{buyFirstTokens},  \codeff{sellOnApprove}, \codeff{sendEthProportion} and so on), we find their cloned instances of an extent of similarity due to the copy-paste-modify paradigm. For these cloned instances, we apply the code differencing to extract the AVS and further refine the AVS to retain the core parts via manual inspection.
+
+For unexpected revert, we also find there exist some cloned instances between TPs. Especially, for the two typical scenario of  unexpected revert---the revert on single account (see Fig.~\ref{fig:motivating2}) and the revert due to failed operations on multiple accounts via a loop, we get totally 8 AVS via clustering  more than 200 TPs that are reported by \slither or \oyento.
+
+For other vulnerability types, we cannot get clusters of cloned function instances due to the fact that the triggering of vulnerability requires not much context. Since the remaining four types are all about improper checks, we design 4 or 5 AVS for each type. For example, regarding \codeff{Tx.origin} abusing, the existing scanners mainly check whether it is inside \codeff{if} statement. According to the observation mentioned in \ref{sec:expements:otherRst}, we extend this with more AVS, such as checking \codeff{Tx.origin} inside  \codeff{require}, \codeff{assert} and \codeff{if-throw}. Similarly, we derive 5 AVS for time manipulation. Last, for unchecked low-level-call, 4 AVS are proposed to catch the improper low-level calls in loop without any validation check on return values, for functions  \codeff{call()}, \codeff{callcode()}, \codeff{delegatecall()} and \codeff{send()}.
