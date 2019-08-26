@@ -1,5 +1,7 @@
 # Doublade
 
+![](fig/logo.png)
+
 In, our experiment studies, we conduct...
 
 ### Evaluating the Existing Tools
