@@ -2,7 +2,7 @@
 
 ![](fig/logo.png)
 
-In, our empirical studies, we conduct comparison on the effectiveness among tools and evaluation on results by scanning the implementation of tools. The study was completed on a dataset with **76354** smart contract. Also, we exihibit exploitation on real vulnerabilities at this [link](https://github.com/ToolmanInside/SolVulnerabilities/tree/master/exploitation%20examples).
+In, our empirical study, we conduct comparison on the effectiveness among tools and evaluation on results by scanning the implementation of tools. The study was completed on a dataset with **76354** smart contract. Also, we list several real code which are suspiciously vulnerable at our point and exhibit exploitations on them at this [link](https://github.com/ToolmanInside/SolVulnerabilities/tree/master/exploitation%20examples).
 
 ### Evaluating the Existing Tools
 
