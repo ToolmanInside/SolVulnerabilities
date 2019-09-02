@@ -6,7 +6,7 @@ In, our empirical study, we conduct comparison on the effectiveness among tools 
 
 ## Index
 
-* Evaluations and Analysis on 76345 Smart Contracts. At [link](https://github.com/ToolmanInside/SolVulnerabilities/tree/master/evaluation).
-* Exploiting Attacks on Vulnerable Contracts. At [link](https://github.com/ToolmanInside/SolVulnerabilities/tree/master/exploitation).
-* Supplement Materials. At [link](https://github.com/ToolmanInside/SolVulnerabilities/tree/master/supplement).
+* Evaluations and Analysis on 76354 Smart Contracts. At [link](https://github.com/ToolmanInside/SolVulnerabilities/tree/master/evaluation).
+* Sampled Exploiting Attacks on 76354 Vulnerable Contracts. At [link](https://github.com/ToolmanInside/SolVulnerabilities/tree/master/exploitation).
+* Supplement Materials for Evaluations on 17770 Contracts. At [link](https://github.com/ToolmanInside/SolVulnerabilities/tree/master/supplement).
 
