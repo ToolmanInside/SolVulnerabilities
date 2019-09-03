@@ -12,7 +12,7 @@ Please download our data on [this](https://drive.google.com/file/d/1k0Edw2r1Z59W
 |   |       doublade_selfdestruct_output.log
 |   |       doublade_tx_output.log
 |   |       doublade_unexpectedrevert_output.log
-|	|
+|   |
 |   +---oyente
 |   +---securify
 |   +---slither
