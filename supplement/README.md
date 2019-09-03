@@ -34,7 +34,7 @@ Please download our data on [this](https://drive.google.com/file/d/1k0Edw2r1Z59W
 |   slither_unexpectedrevert_result.xlsx
 |   smartcheck_lowlevelcall_result.xlsx
 |   smartcheck_tx_result.xlsx
-|  	smartcheck_unexpectedrevert_result.xlsx
+|   smartcheck_unexpectedrevert_result.xlsx
 |
 ```
 
