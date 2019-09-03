@@ -30,5 +30,5 @@ The structure of our data is managed like this:
     \---Smartcheck
 ```
 
-Original Solidity code are putted is folder `source_code`. The files are not named with their deployment addresses, rather, we renamed them for experiment convenience. But we also provide
+Original Solidity code are putted is folder `source_code`. The files are not named with their deployment addresses, rather, we renamed them for experiment convenience. We also provide the address table `address.xlsx` where you can match file names with real addresses.
 
