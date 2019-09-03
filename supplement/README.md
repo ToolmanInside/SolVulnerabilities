@@ -4,16 +4,18 @@ In this section, we provide concrete information about vulnerable code which is 
 
 The structure of our data is managed like this:
 
+```
 +---Reentrancy
 |   +---Doublade
 |   +---Oyente
 |   +---Securify
-|   \+---Slither
-|       \+---Slither
+|   \---Slither
+|       \---Slither
 +---Selfdestruct
 |   +---Doublade
-|   \+---Slither
+|   \---Slither
 +---source_code
+|   \---.vscode
 +---Tx-origin
 |   +---Doublade
 |   +---Slither
@@ -22,9 +24,11 @@ The structure of our data is managed like this:
 |   +---Doublade
 |   +---Slither
 |   \---Smartcheck
-\+---Unexpected_Revert
+\---Unexpected_Revert
     +---Doublade
     +---Slither
     \---Smartcheck
+```
 
 Original Solidity code are putted is folder `source_code`. The files are not named with their deployment addresses, rather, we renamed them for experiment convenience. But we also provide
+
