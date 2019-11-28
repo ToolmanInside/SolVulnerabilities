@@ -26,6 +26,7 @@ The 76 real world vulnerabilities found by Clairvoyance is published in `Google 
     evaluations.rst
     expolits.rst
     suppliments.rst
+    CBs.rst
 
 2.  **Response to reviewer's on the implicit evaluations**
 
