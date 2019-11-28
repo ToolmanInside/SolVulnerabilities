@@ -76,5 +76,92 @@ CB3
     }
 
 
+CB4
+--------
 
-CB1_
+::
+
+    contract ZethrBankroll is ERC223Receiving {
+    ZTHInterface public ZTHTKN;
+    bool internal reEntered;
+    function receiveDividends() public payable {
+        if (!reEntered) {
+        ...
+        if (ActualBalance > 0.01 ether) {
+            reEntered = true;
+            ZTHTKN.buyAndSetDivPercentage.value(ActualBalance)(address(0x0), 33, "");
+            reEntered = false;	}
+        }
+    }
+    }
+    contract ZTHInterface {
+        function buyAndSetDivPercentage(address _referredBy, uint8 _divChoice, string providedUnhashedPass) public payable returns (uint);
+    }
+
+
+CB5
+--------
+
+::
+
+    function Payout(uint a, uint b) internal onlyowner {
+        while (a>b) {
+            uint c;
+            a-=1;
+            if(Tx[a].txvalue < 1000000000000000000) {
+                c=4;}
+            else if (Tx[a].txvalue >= 1000000000000000000) {
+                c=6;}
+            Tx[a].txuser.send((Tx[a].txvalue/100)*c);
+        }
+    }
+
+
+CB6
+----------
+
+::
+
+    function withdraw() private {
+        for(uint i = 0; i < player_[uid].planCount; i++) {
+            if (player_[uid].plans[i].isClose) { continue;  }
+            // amount calculation
+            ...
+            // send the calculated amount directly to sender
+            address sender = msg.sender;
+            sender.transfer(amount);
+            // record block number and the amount of this trans.
+            player_[uid].plans[i].atBlock = block.number;
+            player_[uid].plans[i].isClose = bClose;
+            player_[uid].plans[i].payEth += amount;
+        }
+    }
+
+
+CB7
+--------
+
+::
+
+    function destroyDeed() public {
+        // assure the state is not active
+        require(!active);
+        // if the balance is sent to the owner, destruct it
+        if (owner.send(address(this).balance)) {
+            selfdestruct(burn);}
+    }
+
+
+original CB
+-----------
+
+::
+
+    function buyOne(ERC20 token, address _exchange, uint256 _value, bytes _data) payable public {
+        uint256 tokenBalance = token.balanceOf(this);
+        balances[msg.sender] = balances[msg.sender].add(msg.value);
+        require(_exchange.call.value(_value)(_data));		
+        balances[msg.sender] = balances[msg.sender].sub(_value);	
+        tokenBalances[msg.sender][token] = tokenBalances[msg.sender][token].add(token.balanceOf(this)
+                .sub(tokenBalance));
+    }
