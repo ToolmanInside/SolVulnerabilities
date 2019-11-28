@@ -43,6 +43,7 @@ def setup(sphinx):
 # ones.
 extensions = [
     'sphinx.ext.autosectionlabel',
+    'math',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
