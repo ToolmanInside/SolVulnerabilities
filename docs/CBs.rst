@@ -1,3 +1,6 @@
+CBs
+========
+
 .. _CB1:
 
 CB1
@@ -71,3 +74,7 @@ CB3
         uint256 public regPrice;
         function regstUser(bytes32 _id) payable returns(bool);
     }
+
+
+
+CB1_
