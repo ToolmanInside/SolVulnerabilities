@@ -40,8 +40,9 @@ As the reentrancy caused some significant losses in the past `daoAttack <https:/
 
 For the first DM, in CB1_, according to rule of **Slither**:
 
+.. math::
 
-:math:`r(var_{g}) \vee w(var_{g}) \succ externCall \succ w(var_{g}) \Rightarrow \text{reentrancy}`
+    `r(var_{g}) \vee w(var_{g}) \succ externCall \succ w(var_{g}) \Rightarrow \text{reentrancy}`
 
 
 CB1_ is reported as a reentrancy  by **Slither**---firstly, it writes to the public variable ``total_reward``; then calls external function ``buyTokens.value``; last, writes to the public variable ``winnerPoolTotal``. However, in reality, reentrancy will never be triggered by external attackers due to the hard-coded address value at line 13 in CB1_. Similarly, in CB2_, we show a FP for **Oyente**, according to its run-time detection rule below:
