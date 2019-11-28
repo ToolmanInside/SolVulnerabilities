@@ -1,5 +1,3 @@
-.. include:: CBs
-
 #################################################
 Evaluations and Analysis on 76354 Smart Contracts
 #################################################
@@ -35,7 +33,7 @@ As the reentrancy caused some significant losses in the past `daoAttack <https:/
 -  Using ``if`` lock(s) to prevent reentrancy. However, these DMs are seldom discussed in relevant studies or considered in existing scanners. Hence, the ignorance about possible DMs will result in the high FP rate of detection
 
 
-For the first DM, in `CB1 <CBs/CB1_>`_, according to rule of **Slither**:
+For the first DM, in `CB1 <CBs.rst#CB1>`__, according to rule of **Slither**:
 
 .. math::
 
