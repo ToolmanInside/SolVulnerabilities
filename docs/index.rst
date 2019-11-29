@@ -1,5 +1,5 @@
-Clairvoyance
-============
+Doublade
+========
 
 .. image:: logo.png
     :width: 300px
